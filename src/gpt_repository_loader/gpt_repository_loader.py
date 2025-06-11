@@ -10,6 +10,16 @@ import pyperclip
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
+def is_binary_file(file_path):
+    """Check if a file is binary by looking for null bytes in the first 1024 bytes."""
+    try:
+        with open(file_path, "rb") as f:
+            chunk = f.read(1024)
+            return b"\0" in chunk
+    except (IOError, OSError):
+        return True  # Treat unreadable files as binary
+
+
 def get_ignore_list(ignore_file_path):
     ignore_list = []
     with open(ignore_file_path, "r") as ignore_file:
@@ -33,12 +43,20 @@ def process_repository(repo_path, ignore_list, output_file):
             file_path = os.path.join(root, file)
             relative_file_path = os.path.relpath(file_path, repo_path)
 
-            if not should_ignore(relative_file_path, ignore_list):
-                with open(file_path, "r", errors="ignore") as file:
-                    contents = file.read()
-                output_file.write("----!@#$----" + "\n")
-                output_file.write(f"{relative_file_path}\n")
-                output_file.write(f"{contents}\n")
+            if not should_ignore(
+                relative_file_path, ignore_list
+            ) and not is_binary_file(file_path):
+                try:
+                    with open(
+                        file_path, "r", encoding="utf-8", errors="ignore"
+                    ) as file:
+                        contents = file.read()
+                    output_file.write("----!@#$----" + "\n")
+                    output_file.write(f"{relative_file_path}\n")
+                    output_file.write(f"{contents}\n")
+                except (UnicodeDecodeError, IOError, OSError):
+                    # Skip files that can't be read as text
+                    continue
 
 
 def main() -> int:  # pylint: disable=too-many-statements
@@ -46,9 +64,15 @@ def main() -> int:  # pylint: disable=too-many-statements
     parser = argparse.ArgumentParser(
         description="Process a git repository into a single file for chat gpt."
     )
-    parser.add_argument("repo_path", help="path to the git repository", type=str, nargs="?")
-    parser.add_argument("-p", "--preamble", help="path to the preamble file", type=str, nargs="?")
-    parser.add_argument("--clipboard", help="copy the output to the clipboard", action="store_true")
+    parser.add_argument(
+        "repo_path", help="path to the git repository", type=str, nargs="?"
+    )
+    parser.add_argument(
+        "-p", "--preamble", help="path to the preamble file", type=str, nargs="?"
+    )
+    parser.add_argument(
+        "--clipboard", help="copy the output to the clipboard", action="store_true"
+    )
     parser.add_argument(
         "--write-config",
         help="Write a default config file to the target directory.",
