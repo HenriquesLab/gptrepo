@@ -6,14 +6,34 @@ build-backend = "setuptools.build_meta"
 name = "gptrepo"
 description = "gpt repository loader"
 requires-python = ">=3.7"
-keywords = ["template-python-cmd"]
+keywords = ["gpt", "repository", "loader", "chat-gpt", "ai"]
 license = { text = "BSD 3-Clause License" }
 classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
     "pyperclip"
 ]
-
+dynamic = ["readme"]
 version = "1.0.3"
+maintainers = [
+    {name = "Zachary Vorhies", email = "zachvorhies@protonmail.com"}
+]
+
+[project.urls]
+Homepage = "https://github.com/zackees/gptrepo"
+Repository = "https://github.com/zackees/gptrepo"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = [".gptignore"]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
 
 [tool.pylint."MESSAGES CONTROL"]
 good-names = [
